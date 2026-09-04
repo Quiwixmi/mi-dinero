@@ -23,6 +23,7 @@
     --expense:#C0433B;
     --expense-soft:#FBEBE9;
     --expense-edge:#E7A29B;
+    --blue:#2E6EAC;
     --btn:#21281F;
     --radius:20px;
     --shadow:0 1px 2px rgba(24,35,26,.04), 0 8px 24px rgba(24,35,26,.06);
@@ -228,9 +229,10 @@
     align-items:baseline;
     justify-content:space-between;
     margin-bottom:6px;
+    gap:12px;
   }
-  .catname{font-size:15px;font-weight:700;}
-  .catamt{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--expense);}
+  .catname{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .catamt{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--expense);white-space:nowrap;}
   .catbar{
     height:8px;
     border-radius:99px;
@@ -276,7 +278,25 @@
   }
   .btn--danger{background:var(--expense);color:#fff;box-shadow:none;}
 
-  /* history screen */
+  /* edit-categories entry button */
+  .editcat{
+    display:block;
+    margin:16px auto 0;
+    border:0;
+    background:var(--blue);
+    color:#fff;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:700;
+    padding:10px 18px;
+    border-radius:14px;
+    cursor:pointer;
+    touch-action:manipulation;
+    transition:transform .12s ease, opacity .12s ease;
+  }
+  .editcat:active{transform:scale(.98);opacity:.92;}
+
+  /* history + categories screens */
   .history{
     position:fixed;
     inset:0;
@@ -417,6 +437,70 @@
     vertical-align:middle;
   }
 
+  /* categories manager */
+  .catintro{
+    font-size:13px;
+    color:var(--muted);
+    margin:2px 2px 14px;
+    line-height:1.5;
+  }
+  .clist{
+    background:var(--surface);
+    border-radius:var(--radius);
+    padding:2px 16px;
+    box-shadow:var(--shadow);
+    margin-bottom:16px;
+  }
+  .crow{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .crow:last-child{border-bottom:0;}
+  .cname{font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cdel{
+    flex-shrink:0;
+    margin-left:12px;
+    width:30px;height:30px;
+    border:0;border-radius:50%;
+    background:var(--expense-soft);
+    color:var(--expense);
+    font-size:18px;font-weight:700;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;touch-action:manipulation;
+    transition:transform .12s ease;
+  }
+  .cdel:active{transform:scale(.88);}
+  .cempty{
+    padding:26px 10px;
+    text-align:center;
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.5;
+  }
+  .addcat{
+    width:100%;
+    min-height:54px;
+    border:0;
+    border-radius:var(--radius);
+    background:var(--income);
+    color:#fff;
+    font-size:16px;
+    font-weight:700;
+    font-family:inherit;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    touch-action:manipulation;
+    transition:transform .12s ease;
+  }
+  .addcat:active{transform:scale(.985);}
+  .addcat span{font-size:20px;line-height:1;}
+
   .list{
     background:var(--surface);
     border-radius:var(--radius);
@@ -461,6 +545,26 @@
   }
   .modal__title{margin:0 0 8px;font-size:19px;font-weight:800;}
   .modal__text{margin:0 0 20px;font-size:15px;line-height:1.5;color:var(--muted);}
+  .modal__input{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 14px;
+    font-size:16px;
+    font-family:inherit;
+    color:var(--ink);
+    background:var(--bg);
+    outline:none;
+    margin:0 0 6px;
+  }
+  .modal__input:focus{border-color:var(--income);}
+  .modal__err{
+    margin:0 0 16px;
+    min-height:18px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--expense);
+  }
   .modal__btns{display:flex;gap:11px;}
   .modal__btns .btn{min-height:50px;}
 
@@ -510,11 +614,7 @@
     <div class="field__cat">
       <label for="expCat">Categoría</label>
       <div class="select">
-        <select id="expCat">
-          <option value="Personal">Personal</option>
-          <option value="Estudio">Estudio</option>
-          <option value="Casa">Casa</option>
-        </select>
+        <select id="expCat"></select>
       </div>
     </div>
   </div>
@@ -547,6 +647,8 @@
     <button class="btn" id="openHist">Ver historial</button>
     <button class="btn btn--ghost" id="fresh">Empezar de nuevo</button>
   </div>
+
+  <button class="editcat" id="editCat">Editar Categorías</button>
 </div>
 
 <!-- HISTORY SCREEN -->
@@ -568,7 +670,21 @@
   </div>
 </div>
 
-<!-- MODAL -->
+<!-- CATEGORIES SCREEN -->
+<div class="history" id="cats">
+  <div class="history__bar">
+    <button class="back" id="catsBack">‹ Volver</button>
+    <span class="history__title">Editar Categorías</span>
+    <span class="history__spacer"></span>
+  </div>
+  <div class="history__scroll">
+    <p class="catintro">Tus categorías se guardan en este dispositivo. Agrega o quita las que quieras.</p>
+    <div class="clist" id="catsList"></div>
+    <button class="addcat" id="addCat"><span aria-hidden="true">+</span> Agregar Nueva</button>
+  </div>
+</div>
+
+<!-- RESET MODAL -->
 <div class="modal" id="modal">
   <div class="modal__box">
     <p class="modal__title">¿Empezar de nuevo?</p>
@@ -580,24 +696,54 @@
   </div>
 </div>
 
+<!-- ADD CATEGORY MODAL -->
+<div class="modal" id="catAddModal">
+  <div class="modal__box">
+    <p class="modal__title">Nueva categoría</p>
+    <input class="modal__input" id="catInput" type="text" maxlength="30" autocomplete="off" autocapitalize="sentences" placeholder="ej. Transporte">
+    <p class="modal__err" id="catErr"></p>
+    <div class="modal__btns">
+      <button class="btn btn--ghost" id="catAddCancel">Cancelar</button>
+      <button class="btn" id="catAddConfirm" style="background:var(--income);color:#fff;box-shadow:none;">Agregar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CATEGORY MODAL -->
+<div class="modal" id="catDelModal">
+  <div class="modal__box">
+    <p class="modal__title">¿Quitar categoría?</p>
+    <p class="modal__text">Se quitará «<span id="catDelName"></span>» de la lista. Los gastos que ya la usaban conservan su etiqueta.</p>
+    <div class="modal__btns">
+      <button class="btn btn--ghost" id="catDelCancel">Cancelar</button>
+      <button class="btn btn--danger" id="catDelConfirm">Quitar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
 (function(){
   "use strict";
 
-  var K_TX = 'miDinero_tx_v1';
-  var K_MO = 'miDinero_monthly_v1';
+  var K_TX  = 'miDinero_tx_v1';
+  var K_MO  = 'miDinero_monthly_v1';
+  var K_CAT = 'miDinero_cats_v1';
 
   var MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   var MES_ABR = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
-  var CATS = ['Personal','Estudio','Casa'];
+  var DEFAULT_CATS = ['Personal','Despensa','Gasolina','Pago Tarjetas','Casa'];
+  var NO_CAT = 'Sin categoría';
 
   // ---- state ----
   var tx = load(K_TX, []);
   var monthly = load(K_MO, {});
+  var cats = load(K_CAT, null);
+  if(!Array.isArray(cats)){ cats = DEFAULT_CATS.slice(); }   // seed defaults on first run
   var histEdit = false;
+  var pendingDelete = null;
 
   function load(k, def){
     try{ var v = localStorage.getItem(k); return v ? JSON.parse(v) : def; }
@@ -607,6 +753,7 @@
     try{
       localStorage.setItem(K_TX, JSON.stringify(tx));
       localStorage.setItem(K_MO, JSON.stringify(monthly));
+      localStorage.setItem(K_CAT, JSON.stringify(cats));
     }catch(e){ /* storage unavailable (e.g. preview) — app still works this session */ }
   }
 
@@ -648,6 +795,53 @@
     });
   }
 
+  // ---- categories ----
+  function renderCatOptions(){
+    var prev = expCatEl.value;
+    if(cats.length === 0){
+      expCatEl.innerHTML = '<option value="' + NO_CAT + '">' + NO_CAT + '</option>';
+      expCatEl.value = NO_CAT;
+      return;
+    }
+    expCatEl.innerHTML = cats.map(function(c){
+      return '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>';
+    }).join('');
+    expCatEl.value = (cats.indexOf(prev) !== -1) ? prev : cats[0];
+  }
+
+  function renderCatsList(){
+    if(cats.length === 0){
+      catsListEl.innerHTML = '<div class="cempty">No tienes categorías.<br>Agrega una para clasificar tus gastos.</div>';
+      return;
+    }
+    catsListEl.innerHTML = cats.map(function(c){
+      var e = escapeHtml(c);
+      return '<div class="crow">' +
+               '<span class="cname">' + e + '</span>' +
+               '<button class="cdel" type="button" data-cat="' + e + '" aria-label="Quitar ' + e + '">\u00D7</button>' +
+             '</div>';
+    }).join('');
+  }
+
+  function addCategory(rawName){
+    var name = (rawName || '').replace(/\s+/g,' ').trim();
+    if(!name) return {ok:false, msg:'Escribe un nombre.'};
+    var dup = cats.some(function(c){ return c.toLowerCase() === name.toLowerCase(); });
+    if(dup) return {ok:false, msg:'Esa categoría ya existe.'};
+    cats.push(name);
+    persist();
+    renderCatOptions();
+    renderCatsList();
+    return {ok:true};
+  }
+
+  function removeCategory(name){
+    cats = cats.filter(function(c){ return c !== name; });
+    persist();
+    renderCatOptions();
+    renderCatsList();
+  }
+
   // ---- core actions ----
   function addEntry(type, raw, cat){
     var p = parseAmount(raw);
@@ -660,7 +854,7 @@
       label: makeLabel(raw, p.matched, type),
       ts: now.getTime()
     };
-    if(type === 'expense') entry.cat = (CATS.indexOf(cat) !== -1) ? cat : 'Personal';
+    if(type === 'expense') entry.cat = (cat && String(cat).trim()) ? cat : NO_CAT;
     tx.push(entry);
     var mk = monthKey(now);
     if(!monthly[mk]) monthly[mk] = {income:0, expense:0};
@@ -688,16 +882,26 @@
     toast('Guardado ✓');
   }
 
-  // ---- expense category breakdown ----
-  function expenseByCat(){
-    var out = {Personal:0, Estudio:0, Casa:0, other:0, total:0};
+  // ---- expense breakdown (by whatever tag each expense carries) ----
+  function expenseTotals(){
+    var map = {}, total = 0;
     tx.forEach(function(t){
       if(t.type !== 'expense') return;
-      out.total += t.amount;
-      if(CATS.indexOf(t.cat) !== -1) out[t.cat] += t.amount;
-      else out.other += t.amount;
+      var label = t.cat || NO_CAT;
+      map[label] = (map[label] || 0) + t.amount;
+      total += t.amount;
     });
-    return out;
+    return {map:map, total:total};
+  }
+
+  function breakdownOrder(map){
+    var order = [], seen = {};
+    cats.forEach(function(c){ if(map[c] > 0){ order.push(c); seen[c] = 1; } });
+    Object.keys(map).forEach(function(k){
+      if(!seen[k] && k !== NO_CAT && map[k] > 0){ order.push(k); seen[k] = 1; }
+    });
+    if(map[NO_CAT] > 0) order.push(NO_CAT);
+    return order;
   }
 
   // ---- rendering ----
@@ -713,19 +917,19 @@
   }
 
   function renderBreakdown(){
-    var b = expenseByCat();
-    if(b.total <= 0){
+    var r = expenseTotals();
+    if(r.total <= 0){
       catBreakEl.innerHTML = '<div class="catempty">Aún no hay gastos.</div>';
       return;
     }
-    var items = CATS.map(function(k){ return {name:k, val:b[k]}; });
-    if(b.other > 0) items.push({name:'Sin categoría', val:b.other});
-    catBreakEl.innerHTML = items.map(function(it){
-      var pct = b.total > 0 ? Math.round(it.val / b.total * 100) : 0;
+    var order = breakdownOrder(r.map);
+    catBreakEl.innerHTML = order.map(function(name){
+      var val = r.map[name];
+      var pct = Math.round(val / r.total * 100);
       return '<div class="catrow">' +
                '<div class="catrow__top">' +
-                 '<span class="catname">' + it.name + '</span>' +
-                 '<span class="catamt">' + money(it.val) + '</span>' +
+                 '<span class="catname">' + escapeHtml(name) + '</span>' +
+                 '<span class="catamt">' + money(val) + '</span>' +
                '</div>' +
                '<div class="catbar"><span class="catbar__fill" style="width:' + pct + '%"></span></div>' +
              '</div>';
@@ -824,12 +1028,12 @@
       var ti = 0, te = 0;
       tx.forEach(function(t){ t.type === 'income' ? ti += t.amount : te += t.amount; });
       var bal = ti - te;
-      var b = expenseByCat();
-      out += '\n🏷️ Gastos por categoría\n';
-      out += 'Personal: ' + money(b.Personal) + '\n';
-      out += 'Estudio: ' + money(b.Estudio) + '\n';
-      out += 'Casa: ' + money(b.Casa) + '\n';
-      if(b.other > 0) out += 'Sin categoría: ' + money(b.other) + '\n';
+      var r = expenseTotals();
+      var order = breakdownOrder(r.map);
+      if(order.length){
+        out += '\n🏷️ Gastos por categoría\n';
+        order.forEach(function(name){ out += name + ': ' + money(r.map[name]) + '\n'; });
+      }
       out += '\nTotal ingresos: ' + money(ti) + '\n';
       out += 'Total gastos: ' + money(te) + '\n';
       out += 'Balance: ' + (bal < 0 ? '−' : '') + money(Math.abs(bal)) + '\n';
@@ -861,20 +1065,35 @@
   }
 
   // ---- ui plumbing ----
-  var incInput   = document.getElementById('inc');
-  var expInput   = document.getElementById('exp');
-  var expCatEl   = document.getElementById('expCat');
-  var saveBtn    = document.getElementById('save');
-  var incTotalEl = document.getElementById('incTotal');
-  var expTotalEl = document.getElementById('expTotal');
-  var balEl      = document.getElementById('bal');
-  var catBreakEl = document.getElementById('catBreak');
-  var summaryEl  = document.getElementById('summary');
-  var editBtn    = document.getElementById('editSummary');
-  var listEl     = document.getElementById('list');
-  var historyEl  = document.getElementById('history');
-  var modalEl    = document.getElementById('modal');
-  var toastEl    = document.getElementById('toast');
+  var incInput    = document.getElementById('inc');
+  var expInput    = document.getElementById('exp');
+  var expCatEl    = document.getElementById('expCat');
+  var saveBtn     = document.getElementById('save');
+  var incTotalEl  = document.getElementById('incTotal');
+  var expTotalEl  = document.getElementById('expTotal');
+  var balEl       = document.getElementById('bal');
+  var catBreakEl  = document.getElementById('catBreak');
+  var summaryEl   = document.getElementById('summary');
+  var editBtn     = document.getElementById('editSummary');
+  var listEl      = document.getElementById('list');
+  var historyEl   = document.getElementById('history');
+  var modalEl     = document.getElementById('modal');
+  var toastEl     = document.getElementById('toast');
+
+  var editCatBtn  = document.getElementById('editCat');
+  var catsEl      = document.getElementById('cats');
+  var catsBack    = document.getElementById('catsBack');
+  var catsListEl  = document.getElementById('catsList');
+  var addCatBtn   = document.getElementById('addCat');
+  var catAddModal = document.getElementById('catAddModal');
+  var catInput    = document.getElementById('catInput');
+  var catErr      = document.getElementById('catErr');
+  var catAddCancel  = document.getElementById('catAddCancel');
+  var catAddConfirm = document.getElementById('catAddConfirm');
+  var catDelModal   = document.getElementById('catDelModal');
+  var catDelName    = document.getElementById('catDelName');
+  var catDelCancel  = document.getElementById('catDelCancel');
+  var catDelConfirm = document.getElementById('catDelConfirm');
 
   var toastTimer;
   function toast(msg){
@@ -894,6 +1113,7 @@
     el.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); onSave(); } });
   });
 
+  // history screen
   document.getElementById('openHist').addEventListener('click', function(){
     histEdit = false;
     editBtn.textContent = 'Editar';
@@ -919,6 +1139,50 @@
     }
   });
 
+  // categories screen
+  editCatBtn.addEventListener('click', function(){
+    renderCatsList();
+    catsEl.classList.add('show');
+  });
+  catsBack.addEventListener('click', function(){ catsEl.classList.remove('show'); });
+
+  catsListEl.addEventListener('click', function(e){
+    var btn = e.target.closest ? e.target.closest('.cdel') : null;
+    if(!btn) return;
+    pendingDelete = btn.getAttribute('data-cat');
+    catDelName.textContent = pendingDelete;
+    catDelModal.classList.add('show');
+  });
+
+  function openAddModal(){
+    catInput.value = '';
+    catErr.textContent = '';
+    catAddModal.classList.add('show');
+    setTimeout(function(){ catInput.focus(); }, 60);
+  }
+  function doAdd(){
+    var res = addCategory(catInput.value);
+    if(!res.ok){ catErr.textContent = res.msg; return; }
+    catAddModal.classList.remove('show');
+    toast('Categoría agregada ✓');
+  }
+  addCatBtn.addEventListener('click', openAddModal);
+  catAddConfirm.addEventListener('click', doAdd);
+  catInput.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doAdd(); } });
+  catInput.addEventListener('input', function(){ catErr.textContent = ''; });
+  catAddCancel.addEventListener('click', function(){ catAddModal.classList.remove('show'); });
+  catAddModal.addEventListener('click', function(e){ if(e.target === catAddModal) catAddModal.classList.remove('show'); });
+
+  catDelConfirm.addEventListener('click', function(){
+    if(pendingDelete != null) removeCategory(pendingDelete);
+    pendingDelete = null;
+    catDelModal.classList.remove('show');
+    toast('Categoría eliminada');
+  });
+  catDelCancel.addEventListener('click', function(){ pendingDelete = null; catDelModal.classList.remove('show'); });
+  catDelModal.addEventListener('click', function(e){ if(e.target === catDelModal){ pendingDelete = null; catDelModal.classList.remove('show'); } });
+
+  // reset flow
   document.getElementById('fresh').addEventListener('click', function(){ modalEl.classList.add('show'); });
   document.getElementById('cancel').addEventListener('click', function(){ modalEl.classList.remove('show'); });
   modalEl.addEventListener('click', function(e){ if(e.target === modalEl) modalEl.classList.remove('show'); });
@@ -937,6 +1201,9 @@
     document.getElementById('today').textContent = d.getDate() + ' de ' + MES[d.getMonth()] + ' de ' + d.getFullYear();
   })();
 
+  // init
+  persist();            // ensure the seeded category list is stored on first run
+  renderCatOptions();
   renderHome();
 })();
 </script>
